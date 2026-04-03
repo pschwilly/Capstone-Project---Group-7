@@ -1,8 +1,6 @@
-# vscode
-.vscode
-
-mongodb
-base/free5gc
-
-# cert
-cert/*_*.pem
+clab-g7-transport/
+clab-g7-voip/
+*.tar.gz
+ENV_AUDIT*
+SHOW_*
+base/

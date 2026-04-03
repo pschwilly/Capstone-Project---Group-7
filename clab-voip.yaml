@@ -1,0 +1,22 @@
+name: g7-voip
+
+mgmt:
+  network: free5gc-compose_privnet
+
+topology:
+  nodes:
+    r1:
+      kind: linux
+      image: alpine:latest
+
+    r2:
+      kind: linux
+      image: alpine:latest
+
+    svc-voip:
+      kind: linux
+      image: ubuntu:20.04
+
+  links:
+    - endpoints: ["r1:eth1", "r2:eth1"]
+    - endpoints: ["r2:eth2", "svc-voip:eth1"]

@@ -1,0 +1,96 @@
+info:
+  version: 1.0.7
+  description: SMF Slice 1 (VoIP traffic)
+
+configuration:
+  smfName: SMF-SLICE1
+
+  # SBI = SMF service-based interface (NRF + NF communication)
+  sbi:
+    scheme: http
+    registerIPv4: smf-slice1.free5gc.org
+    bindingIPv4: smf-slice1.free5gc.org     # Must be non-zero
+    port: 8000
+    tls:
+      key: cert/smf.key
+      pem: cert/smf.pem
+
+  serviceNameList:
+    - nsmf-pdusession
+    - nsmf-event-exposure
+    - nsmf-oam
+
+  # Slice handled by this SMF
+  snssaiInfos:
+    - sNssai:
+        sst: 1
+        sd: 010203                          # VoIP slice ID
+      dnnInfos:
+        - dnn: voip
+          dns:
+            ipv4: 8.8.8.8
+            ipv6: 2001:4860:4860::8888
+
+  plmnList:
+    - mcc: 208
+      mnc: 93
+
+  locality: area1
+
+  # PFCP (N4) control plane
+  pfcp:
+    nodeID: smf-slice1.free5gc.org
+    listenAddr: 0.0.0.0
+    externalAddr: smf-slice1.free5gc.org
+
+  # User-plane topology
+  userplaneInformation:
+    upNodes:
+      gNB1:
+        type: AN
+
+      UPF:
+        type: UPF
+        nodeID: upf-slice1
+        addr: upf-slice1
+
+        sNssaiUpfInfos:
+          - sNssai:
+              sst: 1
+              sd: 010203
+            dnnUpfInfoList:
+              - dnn: voip
+                pools:
+                  - cidr: 10.60.0.0/16
+                staticPools:
+                  - cidr: 10.60.100.0/24
+
+        interfaces:
+          - interfaceType: N3
+            endpoints:
+              - upf-slice1
+            networkInstances:
+              - voip
+
+    links:
+      - A: gNB1
+        B: UPF
+
+  # ---- TIMERS (hard-coded, validator-safe) ----
+  t3591:
+    enable: true
+    expireTime: 16
+    maxRetryTimes: 3
+
+  t3592:
+    enable: true
+    expireTime: 16
+    maxRetryTimes: 3
+
+  # NRF discovery
+  nrfUri: http://nrf.free5gc.org:8000
+  nrfCertPem: cert/nrf.pem
+
+logger:
+  enable: true
+  level: info

@@ -1,0 +1,99 @@
+version: 1.0.3
+description: UPF Slice 1 (VoIP)
+
+# ---- PFCP (N4) INTERFACE ----
+# This identifies the UPF to the SMF
+pfcp:
+  addr: upf-slice1              # Must match SMF-SLICE1 config
+  nodeID: upf-slice1
+  retransTimeout: 1s
+  maxRetrans: 3
+
+# ---- GTP-U (N3) INTERFACE ----
+# Handles user-plane traffic from the gNB
+gtpu:
+  forwarder: gtp5g
+  ifList:
+    - addr: upf-slice1          # N3 endpoint for slice1
+      type: N3
+      # ifname: gtpif
+      # mtu: 1400
+
+# ---- DNN LIST ----
+# Defines which data networks this UPF serves
+dnnList:
+  - dnn: voip                   # Slice 1 data network
+    cidr: 10.60.0.0/16          # UE IP pool for slice 1
+    # natifname: eth0
+
+# ---- LOGGER ----
+logger:
+  enable: true
+  level: info
+  reportCaller: false
+1~version: 1.0.3
+description: UPF Slice 1 (VoIP)
+
+# ---- PFCP (N4) INTERFACE ----
+# This identifies the UPF to the SMF
+pfcp:
+  addr: upf-slice1              # Must match SMF-SLICE1 config
+  nodeID: upf-slice1
+  retransTimeout: 1s
+  maxRetrans: 3
+
+# ---- GTP-U (N3) INTERFACE ----
+# Handles user-plane traffic from the gNB
+gtpu:
+  forwarder: gtp5g
+  ifList:
+    - addr: upf-slice1          # N3 endpoint for slice1
+      type: N3
+      # ifname: gtpif
+      # mtu: 1400
+
+# ---- DNN LIST ----
+# Defines which data networks this UPF serves
+dnnList:
+  - dnn: voip                   # Slice 1 data network
+    cidr: 10.60.0.0/16          # UE IP pool for slice 1
+    # natifname: eth0
+
+# ---- LOGGER ----
+logger:
+  enable: true
+  level: info
+  reportCaller: false
+1~dxssversion: 1.0.3
+description: UPF Slice 1 (VoIP)
+
+# ---- PFCP (N4) INTERFACE ----
+# This identifies the UPF to the SMF
+pfcp:
+  addr: upf-slice1              # Must match SMF-SLICE1 config
+  nodeID: upf-slice1
+  retransTimeout: 1s
+  maxRetrans: 3
+
+# ---- GTP-U (N3) INTERFACE ----
+# Handles user-plane traffic from the gNB
+gtpu:
+  forwarder: gtp5g
+  ifList:
+    - addr: upf-slice1          # N3 endpoint for slice1
+      type: N3
+      # ifname: gtpif
+      # mtu: 1400
+
+# ---- DNN LIST ----
+# Defines which data networks this UPF serves
+dnnList:
+  - dnn: voip                   # Slice 1 data network
+    cidr: 10.60.0.0/16          # UE IP pool for slice 1
+    # natifname: eth0
+
+# ---- LOGGER ----
+logger:
+  enable: true
+  level: info
+  reportCaller: false

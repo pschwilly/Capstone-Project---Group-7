@@ -1,0 +1,91 @@
+info:
+  version: 1.0.7
+  description: SMF Slice 2 (Video traffic)
+
+configuration:
+  smfName: SMF-SLICE2
+
+  sbi:
+    scheme: http
+    registerIPv4: smf-slice2.free5gc.org
+    bindingIPv4: smf-slice2.free5gc.org     # Must be non-zero
+    port: 8001
+    tls:
+      key: cert/smf.key
+      pem: cert/smf.pem
+
+  serviceNameList:
+    - nsmf-pdusession
+    - nsmf-event-exposure
+    - nsmf-oam
+
+  snssaiInfos:
+    - sNssai:
+        sst: 1
+        sd: 112233                          # Video slice ID
+      dnnInfos:
+        - dnn: Video
+          dns:
+            ipv4: 8.8.8.8
+            ipv6: 2001:4860:4860::8888
+
+  plmnList:
+    - mcc: 208
+      mnc: 93
+
+  locality: area1
+
+  pfcp:
+    nodeID: smf-slice2.free5gc.org
+    listenAddr: 0.0.0.0
+    externalAddr: smf-slice2.free5gc.org
+
+  userplaneInformation:
+    upNodes:
+      gNB1:
+        type: AN
+
+      UPF:
+        type: UPF
+        nodeID: upf-slice2
+        addr: upf-slice2
+
+        sNssaiUpfInfos:
+          - sNssai:
+              sst: 1
+              sd: 112233
+            dnnUpfInfoList:
+              - dnn: Video
+                pools:
+                  - cidr: 10.61.0.0/16
+                staticPools:
+                  - cidr: 10.61.100.0/24
+
+        interfaces:
+          - interfaceType: N3
+            endpoints:
+              - upf-slice2
+            networkInstances:
+              - Video
+
+    links:
+      - A: gNB1
+        B: UPF
+
+  # ---- TIMERS (hard-coded, validator-safe) ----
+  t3591:
+    enable: true
+    expireTime: 16
+    maxRetryTimes: 3
+
+  t3592:
+    enable: true
+    expireTime: 16
+    maxRetryTimes: 3
+
+  nrfUri: http://nrf.free5gc.org:8000
+  nrfCertPem: cert/nrf.pem
+
+logger:
+  enable: true
+  level: info
