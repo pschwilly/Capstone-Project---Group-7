@@ -1,16 +1,15 @@
 info:
   version: 1.0.7
-  description: SMF Slice 1 (VoIP traffic)
+  description: SMF Slice 2 (Video traffic)
 
 configuration:
-  smfName: SMF-SLICE1
+  smfName: SMF-SLICE2
 
-  # SBI = SMF service-based interface (NRF + NF communication)
   sbi:
     scheme: http
-    registerIPv4: smf-slice1.free5gc.org
-    bindingIPv4: smf-slice1.free5gc.org     # Must be non-zero
-    port: 8000
+    registerIPv4: smf-slice2.free5gc.org
+    bindingIPv4: smf-slice2.free5gc.org     # Must be non-zero
+    port: 8001
     tls:
       key: cert/smf.key
       pem: cert/smf.pem
@@ -20,13 +19,12 @@ configuration:
     - nsmf-event-exposure
     - nsmf-oam
 
-  # Slice handled by this SMF
   snssaiInfos:
     - sNssai:
         sst: 1
-        sd: 010203                          # VoIP slice ID
+        sd: 112233                          # Video slice ID
       dnnInfos:
-        - dnn: voip
+        - dnn: Video
           dns:
             ipv4: 8.8.8.8
             ipv6: 2001:4860:4860::8888
@@ -37,13 +35,11 @@ configuration:
 
   locality: area1
 
-  # PFCP (N4) control plane
   pfcp:
-    nodeID: smf-slice1.free5gc.org
+    nodeID: smf-slice2.free5gc.org
     listenAddr: 0.0.0.0
-    externalAddr: smf-slice1.free5gc.org
+    externalAddr: smf-slice2.free5gc.org
 
-  # User-plane topology
   userplaneInformation:
     upNodes:
       gNB1:
@@ -51,26 +47,26 @@ configuration:
 
       UPF:
         type: UPF
-        nodeID: 10.100.200.3
-        addr: 10.100.200.3
+        nodeID: upf-slice2
+        addr: upf-slice2
 
         sNssaiUpfInfos:
           - sNssai:
               sst: 1
-              sd: 010203
+              sd: 112233
             dnnUpfInfoList:
-              - dnn: voip
+              - dnn: Video
                 pools:
-                  - cidr: 10.60.0.0/16
+                  - cidr: 10.61.0.0/16
                 staticPools:
-                  - cidr: 10.60.100.0/24
+                  - cidr: 10.61.100.0/24
 
         interfaces:
           - interfaceType: N3
             endpoints:
-              - 10.100.200.3
+              - upf-slice2
             networkInstances:
-              - voip
+              - Video
 
     links:
       - A: gNB1
@@ -87,7 +83,6 @@ configuration:
     expireTime: 16
     maxRetryTimes: 3
 
-  # NRF discovery
   nrfUri: http://nrf.free5gc.org:8000
   nrfCertPem: cert/nrf.pem
 

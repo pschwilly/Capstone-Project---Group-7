@@ -1,4 +1,4 @@
-# Kept aligned with the new Slice 2 load UE profile for clarity
+# Load UE for shared-UPF demo on Slice 2
 supi: "imsi-208930000000001"
 mcc: "208"
 mnc: "93"
@@ -8,9 +8,11 @@ op: "8e27b6af0e692e750f32667a3b14605d"
 opType: "OPC"
 amf: "8000"
 
+# Keep device identity distinct from the video UE
 imei: "356938035643804"
 imeiSv: "4370816125816152"
 
+# gNB address for Radio Link Simulation
 gnbSearchList:
   - gnb.free5gc.org
 

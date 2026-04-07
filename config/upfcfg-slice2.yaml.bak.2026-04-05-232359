@@ -3,8 +3,8 @@ description: UPF Slice 2 (Video traffic)
 
 # ---- PFCP (N4 interface) ----
 pfcp:
-  addr: 10.100.200.2              # MUST match SMF-SLICE2 UPF addr
-  nodeID: 10.100.200.2            # MUST match SMF-SLICE2 nodeID
+  addr: upf-slice2              # MUST match SMF-SLICE2 UPF addr
+  nodeID: upf-slice2            # MUST match SMF-SLICE2 nodeID
   retransTimeout: 1s
   maxRetrans: 3
 
@@ -12,7 +12,7 @@ pfcp:
 gtpu:
   forwarder: gtp5g
   ifList:
-    - addr: 10.100.200.2          # N3 endpoint for slice 2
+    - addr: upf-slice2          # N3 endpoint for slice 2
       type: N3
       # ifname: gtpif
       # mtu: 1400

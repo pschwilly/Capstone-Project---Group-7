@@ -51,8 +51,8 @@ configuration:
 
       UPF:
         type: UPF
-        nodeID: 10.100.200.3
-        addr: 10.100.200.3
+        nodeID: upf-slice1
+        addr: upf-slice1
 
         sNssaiUpfInfos:
           - sNssai:
@@ -68,7 +68,7 @@ configuration:
         interfaces:
           - interfaceType: N3
             endpoints:
-              - 10.100.200.3
+              - upf-slice1
             networkInstances:
               - voip
 

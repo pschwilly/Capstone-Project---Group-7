@@ -2,15 +2,15 @@ version: 1.0.3
 description: UPF Slice 1 (separate-UPF demo path)
 
 pfcp:
-  addr: 10.100.200.3
-  nodeID: 10.100.200.3
+  addr: upf-slice1
+  nodeID: upf-slice1
   retransTimeout: 1s
   maxRetrans: 3
 
 gtpu:
   forwarder: gtp5g
   ifList:
-    - addr: 10.100.200.3
+    - addr: upf-slice1
       type: N3
 
 dnnList:

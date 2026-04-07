@@ -47,8 +47,8 @@ configuration:
 
       UPF:
         type: UPF
-        nodeID: upf-slice2
-        addr: upf-slice2
+        nodeID: 10.100.200.2
+        addr: 10.100.200.2
 
         sNssaiUpfInfos:
           - sNssai:
@@ -64,7 +64,7 @@ configuration:
         interfaces:
           - interfaceType: N3
             endpoints:
-              - upf-slice2
+              - 10.100.200.2
             networkInstances:
               - Video
 

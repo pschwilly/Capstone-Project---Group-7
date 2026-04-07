@@ -21,6 +21,8 @@ services:
       privnet:
         aliases:
           - upf-slice1
+      handoff_s1:
+        ipv4_address: 172.31.1.3
 
   free5gc-upf-slice2:
     container_name: upf-slice2
@@ -39,6 +41,8 @@ services:
       privnet:
         aliases:
           - upf-slice2
+      handoff_s2:
+        ipv4_address: 172.31.2.3
 
   # =======================
   # Database
@@ -278,10 +282,10 @@ services:
       - free5gc-nrf
 
   # =======================
-  # UERANSIM
+  # UERANSIM gNB only
   # =======================
-  ueransim:
-    container_name: ueransim
+  gnb:
+    container_name: gnb
     build:
       context: ./ueransim
       dockerfile: Dockerfile
@@ -289,8 +293,6 @@ services:
     command: ./nr-gnb -c ./config/gnbcfg.yaml
     volumes:
       - ./config/gnbcfg.yaml:/ueransim/config/gnbcfg.yaml
-      - ./config/uecfg.yaml:/ueransim/config/uecfg.yaml
-      - ./config/uecfg-video.yaml:/ueransim/config/uecfg-video.yaml        
     cap_add:
       - NET_ADMIN
     devices:
@@ -304,6 +306,92 @@ services:
       - free5gc-upf-slice1
       - free5gc-upf-slice2
 
+  # =======================
+  # Slice 2 UEs (shared UPF)
+  # =======================
+  ue-s2-video:
+    container_name: ue-s2-video
+    build:
+      context: ./ueransim
+      dockerfile: Dockerfile
+    image: ueransim-iperf3:latest
+    command: sh -lc "sleep infinity"
+    volumes:
+      - ./config/uecfg-s2-video.yaml:/ueransim/config/uecfg.yaml
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    networks:
+      privnet:
+    depends_on:
+      - gnb
+      - free5gc-amf
+      - free5gc-upf-slice2
+
+  ue-s2-load:
+    container_name: ue-s2-load
+    build:
+      context: ./ueransim
+      dockerfile: Dockerfile
+    image: ueransim-iperf3:latest
+    command: sh -lc "sleep infinity"
+    volumes:
+      - ./config/uecfg-s2-load.yaml:/ueransim/config/uecfg.yaml
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    networks:
+      privnet:
+    depends_on:
+      - gnb
+      - free5gc-amf
+      - free5gc-upf-slice2
+
+  # =======================
+  # Slice 1 UEs (separate UPF)
+  # =======================
+  ue-s1-video:
+    container_name: ue-s1-video
+    build:
+      context: ./ueransim
+      dockerfile: Dockerfile
+    image: ueransim-iperf3:latest
+    command: sh -lc "sleep infinity"
+    volumes:
+      - ./config/uecfg-s1-video.yaml:/ueransim/config/uecfg.yaml
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    networks:
+      privnet:
+    depends_on:
+      - gnb
+      - free5gc-amf
+      - free5gc-upf-slice1
+
+  ue-s1-load:
+    container_name: ue-s1-load
+    build:
+      context: ./ueransim
+      dockerfile: Dockerfile
+    image: ueransim-iperf3:latest
+    command: sh -lc "sleep infinity"
+    volumes:
+      - ./config/uecfg-s1-load.yaml:/ueransim/config/uecfg.yaml
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    networks:
+      privnet:
+    depends_on:
+      - gnb
+      - free5gc-amf
+      - free5gc-upf-slice1
+
 networks:
   privnet:
     driver: bridge
@@ -312,6 +400,20 @@ networks:
         - subnet: 10.100.200.0/24
     driver_opts:
       com.docker.network.bridge.name: br-free5gc
+
+  handoff_s1:
+    name: free5gc-compose_handoff_s1
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.31.1.0/29
+
+  handoff_s2:
+    name: free5gc-compose_handoff_s2
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.31.2.0/29
 
 volumes:
   dbdata:

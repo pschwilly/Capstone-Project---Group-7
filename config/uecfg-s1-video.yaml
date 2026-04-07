@@ -1,5 +1,4 @@
-# Kept aligned with the new Slice 2 load UE profile for clarity
-supi: "imsi-208930000000001"
+supi: "imsi-208930000000003"
 mcc: "208"
 mnc: "93"
 
@@ -8,8 +7,8 @@ op: "8e27b6af0e692e750f32667a3b14605d"
 opType: "OPC"
 amf: "8000"
 
-imei: "356938035643804"
-imeiSv: "4370816125816152"
+imei: "356938035643805"
+imeiSv: "4370816125816153"
 
 gnbSearchList:
   - gnb.free5gc.org
@@ -28,18 +27,18 @@ uacAcc:
 
 sessions:
   - type: "IPv4"
-    apn: "Video"
+    apn: "voip"
     slice:
       sst: 0x01
-      sd: 0x112233
+      sd: 0x010203
 
 configured-nssai:
   - sst: 0x01
-    sd: 0x112233
+    sd: 0x010203
 
 default-nssai:
   - sst: 0x01
-    sd: 0x112233
+    sd: 0x010203
 
 integrity:
   IA1: true
