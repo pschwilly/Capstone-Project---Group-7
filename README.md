@@ -1,173 +1,205 @@
-# free5GC compose
+# Secure Network and User Services on Virtual Sliced 5G Infrastructure
 
-This repository is a docker compose version of [free5GC](https://github.com/free5gc/free5gc) for stage 3. It's inspired by [free5gc-docker-compose](https://github.com/calee0219/free5gc-docker-compose) and also reference to [docker-free5gc](https://github.com/abousselmi/docker-free5gc).
+A capstone project by Group 7 — Carleton University (NET4901)
 
-You can setup your own config in [config](./config) folder and [docker-compose.yaml](docker-compose.yaml)
+## Overview
+
+This project deploys a fully functional 5G Standalone (SA) core network using open-source tools, demonstrating network slicing with true user-plane isolation. Two independent slices are provisioned, each with a dedicated SMF and UPF, connected through a simulated multi-hop transport network built with Containerlab. The demo validates that traffic flooding on one slice has zero impact on another.
+
+## Team
+
+- Patrick Schwilden
+- Karar Alfaris
+- Nicolas Gagnon
+- Jahnvi Patel
+- Jayden Côté
+- Christina Ulett
+
+**Supervisor:** Dr. Ashraf Matrawy — Carleton University
+
+---
+
+## Architecture
+
+```
+                          ┌─────────────────────────────────────┐
+                          │           Free5GC Core               │
+  UEs (UERANSIM)          │  AMF / NRF / UDM / AUSF / PCF / NSSF│
+       │                  │                                       │
+       ▼                  │  SMF-Slice1 ──N4──► UPF-Slice1       │
+  gNB (UERANSIM) ─NGAP──► │                                       │
+                          │  SMF-Slice2 ──N4──► UPF-Slice2       │
+                          └────────────┬────────────┬────────────┘
+                                       │            │
+                              GTP-U    │            │ GTP-U
+                                       ▼            ▼
+                          ┌─────── Containerlab Transport ───────┐
+                          │                                       │
+                          │  UPF-Slice1 ──► r1 ──► r2-s1 ──► svc-s1 (192.168.220.2)
+                          │  UPF-Slice2 ──► r1 ──► r2-s2 ──► svc-s2 (192.168.210.2)
+                          │                                       │
+                          └───────────────────────────────────────┘
+```
+
+### Network Slices
+
+| Slice | SST | SD | UE Pool | UPF | Service Node |
+|-------|-----|----|---------|-----|--------------|
+| Slice 1 | 1 | 010203 | 10.60.0.0/16 | upf-slice1 | 192.168.220.2 |
+| Slice 2 | 1 | 112233 | 10.61.0.0/16 | upf-slice2 | 192.168.210.2 |
+
+### UE Containers
+
+| Container | Role | Slice | Tunnel IP |
+|-----------|------|-------|-----------|
+| ue-s2-video | Video streaming UE | Slice 2 | 10.61.100.12 |
+| ue-s2-load | Load generating UE | Slice 2 | 10.61.100.11 |
+| ue-s1-video | Video streaming UE | Slice 1 | 10.60.100.13 |
+| ue-s1-load | Load generating UE | Slice 1 | 10.60.100.14 |
+
+---
+
+## Technology Stack
+
+| Component | Tool |
+|-----------|------|
+| 5G Core | Free5GC v4.1.0 |
+| RAN / UE Emulation | UERANSIM |
+| Transport Network | Containerlab (Alpine Linux routers) |
+| Containerization | Docker / Docker Compose |
+| Video Service | nginx + ffmpeg |
+| Traffic Generation | curl (hitload script) |
+| Video Playback | ffplay (via noVNC) |
+
+---
 
 ## Prerequisites
 
-- [GTP5G kernel module](https://github.com/free5gc/gtp5g): needed to run the UPF (Currently, UPF only supports GTP5G versions 0.9.5 (use git clone --branch v0.9.5 --depth 1 https://github.com/free5gc/gtp5g.git).)
-- [Docker Engine](https://docs.docker.com/engine/install): needed to run the Free5GC containers
-- [Docker Compose v2](https://docs.docker.com/compose/install): needed to bootstrap the free5GC stack
+- Ubuntu 22.04
+- Docker and Docker Compose
+- Containerlab
+- Kernel module: gtp5g
 
-**Note: AVX for MongoDB**: some HW does not support MongoDB releases above`4.4` due to use of the new AVX instructions set. To verify if your CPU is compatible you can check CPU flags by running `grep avx /proc/cpuinfo`. A workaround is suggested [here](https://github.com/free5gc/free5gc-compose/issues/30#issuecomment-897627049).
+---
 
-## Start free5gc
+## Setup
 
-Because we need to create tunnel interface, we need to use privileged container with root permission.
-
-### Pull docker images from Docker Hub
-
-```bash
-docker compose pull
-```
-
-### [Optional] Build docker images from local sources
+### 1. Start the 5G Core
 
 ```bash
-# Clone the project
-git clone https://github.com/free5gc/free5gc-compose.git
-cd free5gc-compose
-
-# clone free5gc sources
-cd base
-git clone --recursive -j `nproc` https://github.com/free5gc/free5gc.git
-cd ..
-
-# Build the images
-make all
-docker compose -f docker-compose-build.yaml build
-
-# Alternatively you can build specific NF image e.g.:
-make amf
-docker compose -f docker-compose-build.yaml build free5gc-amf
+docker compose up -d
 ```
 
-Note:
-
-Dangling images may be created during the build process. It is advised to remove them from time to time to free up disk space.
+### 2. Start UEs
 
 ```bash
-docker rmi $(docker images -f "dangling=true" -q)
+./start_ue.sh
 ```
 
-### Run free5GC
+This script starts the gNB and all 4 UE containers, registers them with the core, brings up GTP tunnels, and installs the hitload/stopload tools.
 
-You can create free5GC containers based on local images or docker hub images:
+### 3. Start Transport Network
 
 ```bash
-# use local images
-docker compose -f docker-compose-build.yaml up
-# use images from docker hub
-docker compose up # add -d to run in background mode
+./start_clab_transport.sh
 ```
 
-Destroy the established container resource after testing:
+This script deploys the Containerlab topology, configures per-slice routing, encodes the demo video, starts nginx and iperf3 on both service nodes, and launches noVNC desktops in both video UE containers.
+
+### 4. SSH Tunnel (on your laptop)
 
 ```bash
-# Remove established containers (local images)
-docker compose -f docker-compose-build.yaml rm
-# Remove established containers (remote images)
-docker compose rm
+ssh -L 6080:10.100.200.22:6080 -L 6081:10.100.200.19:6080 -l group7 134.117.92.142
 ```
 
-## Troubleshooting
+Open:
+- http://localhost:6080/vnc_lite.html — Slice 2 video UE
+- http://localhost:6081/vnc_lite.html — Slice 1 video UE
+- Password: `net4901*`
 
-Please refer to the [Troubleshooting](./TROUBLESHOOTING.md) for more troubleshooting information.
+---
 
-## Integration with (external) gNB/UE
+## Demo
 
-### UERANSIM Notes
+### Start video playback
 
-The integration with the [UERANSIM](https://github.com/aligungr/UERANSIM) eNB/UE simulator is documented [here](https://free5gc.org/guide/5-install-ueransim/).
-
-This [issue](https://github.com/free5gc/free5gc-compose/issues/28) provides detailed steps that might be useful.
-
-#### Option 1: Run UE inside gNB container
-
-You can launch a UE using:
-
-```console
-docker exec -it ueransim bash
-root@host:/ueransim# ./nr-ue -c config/uecfg.yaml
+In Slice 2 noVNC terminal (6080):
+```bash
+ffplay -fflags nobuffer -flags low_delay -framedrop -sync ext http://192.168.210.2/demo_long.mp4
 ```
 
-#### Option 2: Run UE on a separate container
-
-By default, the provided UERANSIM service on this `docker-compose.yaml` will only act as a gNB. If you want to create a UE you'll need to:
-
-1. Create a subscriber through the WebUI. Follow the steps [here](https://free5gc.org/guide/Webconsole/Create-Subscriber-via-webconsole/#4-open-webconsole)
-1. Copy the `UE ID` field
-1. Change the value of `supi` in `config/uecfg.yaml` to the UE ID that you just copied
-1. Change the `linkIp` in `config/gnbcfg.yaml` to `gnb.free5gc.org` (which is also present in the `gnbSearchList` in `config/uecfg.yaml`) to enable communication between the UE and gNB services
-1. Add an UE service on `docker-compose.yaml` as it follows:
-
-```yaml
-ue:
-  container_name: ue
-  image: free5gc/ueransim:latest
-  command: ./nr-ue -c ./config/uecfg.yaml
-  volumes:
-    - ./config/uecfg.yaml:/ueransim/config/uecfg.yaml
-  cap_add:
-    - NET_ADMIN
-  devices:
-    - "/dev/net/tun"
-  networks:
-    privnet:
-      aliases:
-        - ue.free5gc.org
-  depends_on:
-    - ueransim
+In Slice 1 noVNC terminal (6081):
+```bash
+ffplay -fflags nobuffer -flags low_delay -framedrop -sync ext http://192.168.220.2/demo_long.mp4
 ```
 
-5. Run `docker-compose.yaml`
+Let both videos play for 8-10 seconds before starting any load.
 
-### srsRAN Notes
+---
 
-You can check this [issue](https://github.com/free5gc/free5gc-compose/issues/94) for some sample configuration files of srsRAN + free5GC
+### Scenario 1 — Shared UPF (degradation)
 
-## Integration of WebUI with Nginx reverse proxy
-
-Here you can find helpful guidelines on the integration of Nginx reverse proxy to set it in front of the WebUI: https://github.com/free5gc/free5gc-compose/issues/55#issuecomment-1146648600
-
-## ULCL Configuration
-
-To start the core with a I-UPF and PSA-UPF ULCL configuration, use
+Both the video UE and load UE are on Slice 2, sharing the same UPF. When the load UE generates traffic, it competes directly with the video UE for bandwidth.
 
 ```bash
-docker compose -f docker-compose-ulcl.yaml up
+docker exec -it ue-s2-load sh -lc 'hitload 24 uesimtun0'
 ```
 
-> Note: This configuration have been tested using release [free5gc-compose v4.0.0](https://github.com/free5gc/free5gc-compose/tree/v4.0.0)
+**Result:** Slice 2 video stutters and degrades. Slice 1 is completely unaffected.
 
-Check out the used configuration files at `config/ULCL`.
+Stop the load:
+```bash
+docker exec -it ue-s2-load sh -lc 'stopload'
+```
 
-## Prometheous & Grafana
+---
 
-To start the core with Prometheous and Grafana, we need external compose service file to start with our core compose:
+### Scenario 2 — Separate UPF (isolation)
+
+The load UE is on Slice 1, which has its own dedicated UPF and independent transport path. Traffic on Slice 1 cannot affect Slice 2.
 
 ```bash
-docker compose -f docker-compose.yaml -f docker-compose-prometheus.yaml up
+docker exec -it ue-s1-load sh -lc 'hitload 24 uesimtun0'
 ```
 
-Please make sure the metrics secions are enabled in NFs' config, it is disabled in default:
+**Result:** Both videos remain smooth. Isolation is verified.
 
-```yaml
-  # Metrics configuration
-  # If using the same bindingIPv4 as the sbi server, make sure that the ports are different
-  metrics:
-=>  enable: true # (Optional, default false)
-    scheme: http # (Required) the protocol for metrics (http or https, default https)
-    bindingIPv4: amf.free5gc.org # (Required) IP used to bind the metrics endpoint (default 0.0.0.0)
-    port: 9091 # (Optional, default 9091) port used to bind the service
-    tls: # (Optional) the local path of TLS key (Could be the same as the sbi ones)
-      pem: cert/amf.pem # AMF TLS Certificate
-      key: cert/amf.key # AMF TLS Private key
-    namespace: free5gc # (Optional, default free5gc)
+Stop the load:
+```bash
+docker exec -it ue-s1-load sh -lc 'stopload'
 ```
 
-## Reference
+---
 
-- https://github.com/open5gs/nextepc/tree/master/docker
-- https://github.com/abousselmi/docker-free5gc
+## Key Results
+
+| Scenario | Slice 2 Throughput | Video Quality |
+|----------|-------------------|---------------|
+| Baseline (no load) | ~34 MB/s | Smooth |
+| Shared UPF under load | Degraded | Stutters |
+| Separate UPF under load | ~34 MB/s | Smooth |
+
+---
+
+## Recovery
+
+If anything breaks:
+
+```bash
+./start_ue.sh
+./start_clab_transport.sh
+```
+
+---
+
+## Repository Structure
+
+```
+├── config/                    # Free5GC and UERANSIM config files
+├── docker-compose.yaml        # Main 5G core stack
+├── clab.yaml                  # Containerlab transport topology
+├── start_ue.sh                # Start gNB and all 4 UEs
+├── start_clab_transport.sh    # Deploy transport network and services
+├── fix_vnc.sh                 # Fix VNC if desktop crashes
+└── README.md
+```
